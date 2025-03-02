@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model,
         prompt,
-        stream: false,
+        stream: true, // ストリーミングを有効にする
       }),
     });
 
@@ -23,8 +23,12 @@ export async function POST(request: Request) {
       throw new Error(`Ollama API error: ${ollamaResponse.status} ${ollamaResponse.statusText}`);
     }
 
-    const data = await ollamaResponse.json();
-    return NextResponse.json({ result: data.response });
+    // ストリーミングされたレスポンスを返す
+    return new NextResponse(ollamaResponse.body, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+      },
+    });
   } catch (error: any) {
     console.error(error);
     return NextResponse.json({ error: error.message }, { status: 500 });

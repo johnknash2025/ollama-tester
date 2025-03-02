@@ -1,10 +1,21 @@
 "use client";
 
 import { generateText } from '@/lib/ollama';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import modelsData from '@/data/models.json';
+
+interface Model {
+  name: string;
+  size: string;
+  architecture: string;
+  trainingData: string;
+  license: string;
+}
+
+const MODELS: Model[] = modelsData;
 
 export default function Home() {
-  const [model, setModel] = useState('llama2');
+  const [model, setModel] = useState(MODELS[0].name);
   const [prompt, setPrompt] = useState('');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,9 +23,58 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setResult(''); // Clear previous result
+
     try {
-      const data = await generateText(model, prompt);
-      setResult(data);
+      const response = await fetch('/api/ollama', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model, prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Failed to get reader from response body');
+      }
+
+      let decoder = new TextDecoder();
+      let accumulatedResult = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        const chunk = decoder.decode(value);
+        const jsonChunks = chunk.split('}{').map((chunk, index, array) => {
+          if (index > 0) {
+            chunk = '{' + chunk;
+          }
+          if (index < array.length - 1) {
+            chunk = chunk + '}';
+          }
+          try {
+            return JSON.parse(chunk);
+          } catch (e) {
+            console.warn('Failed to parse JSON chunk:', chunk);
+            return null;
+          }
+        }).filter(Boolean);
+
+        jsonChunks.forEach(jsonChunk => {
+          if (jsonChunk && jsonChunk.response) {
+            accumulatedResult += jsonChunk.response;
+            setResult(accumulatedResult);
+          }
+        });
+      }
     } catch (error: any) {
       console.error(error);
       setResult(`Error: ${error.message}`);
@@ -37,8 +97,11 @@ export default function Home() {
             value={model}
             onChange={(e) => setModel(e.target.value)}
           >
-            <option value="llama2">llama2</option>
-            <option value="codellama">codellama</option>
+            {MODELS.map((model) => (
+              <option key={model.name} value={model.name}>
+                {model.name}
+              </option>
+            ))}
           </select>
         </div>
         <div className="mb-2">

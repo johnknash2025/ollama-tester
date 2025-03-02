@@ -1,0 +1,107 @@
+[
+  {
+    "name": "llama2:latest",
+    "size": "3.8 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Apache 2.0"
+  },
+  {
+    "name": "hf.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-32B-Japanese-gguf:latest",
+    "size": "19 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Unknown"
+  },
+  {
+    "name": "gemma2:27b",
+    "size": "15 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Unknown"
+  },
+  {
+    "name": "deepseek-r1:32b",
+    "size": "19 GB",
+    "architecture": "Transformer",
+    "trainingData": "Code",
+    "license": "Unknown"
+  },
+  {
+    "name": "deepseek-r1:14b",
+    "size": "9.0 GB",
+    "architecture": "Transformer",
+    "trainingData": "Code",
+    "license": "Unknown"
+  },
+  {
+    "name": "qwen2.5-coder-cline:32b",
+    "size": "19 GB",
+    "architecture": "Transformer",
+    "trainingData": "Code",
+    "license": "Unknown"
+  },
+  {
+    "name": "phi-4-cline:latest",
+    "size": "9.1 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Unknown"
+  },
+  {
+    "name": "phi4:latest",
+    "size": "9.1 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Unknown"
+  },
+  {
+    "name": "qwen2.5-coder:14b",
+    "size": "9.0 GB",
+    "architecture": "Transformer",
+    "trainingData": "Code",
+    "license": "Unknown"
+  },
+  {
+    "name": "qwen2.5-coder:32b",
+    "size": "19 GB",
+    "architecture": "Transformer",
+    "trainingData": "Code",
+    "license": "Unknown"
+  },
+  {
+    "name": "qwq:latest",
+    "size": "19 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Unknown"
+  },
+  {
+    "name": "llama3.1:8b",
+    "size": "4.7 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Apache 2.0"
+  },
+  {
+    "name": "deepseek-coder-v2:latest",
+    "size": "8.9 GB",
+    "architecture": "Transformer",
+    "trainingData": "Code",
+    "license": "Unknown"
+  },
+  {
+    "name": "codegemma:latest",
+    "size": "5.0 GB",
+    "architecture": "Transformer",
+    "trainingData": "Code",
+    "license": "Apache 2.0"
+  },
+  {
+    "name": "command-r:latest",
+    "size": "20 GB",
+    "architecture": "Transformer",
+    "trainingData": "Text",
+    "license": "Unknown"
+  }
+]
