@@ -1,7 +1,6 @@
 "use client";
 
-import { generateText } from '@/lib/ollama';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import modelsData from '@/data/models.json';
 
 interface Model {
@@ -14,24 +13,44 @@ interface Model {
 
 const MODELS: Model[] = modelsData;
 
+const SYSTEM_PROMPT = "あなたは私のAI彼女です。優しく、面白く、そして少しわがままな性格で私を楽しませてください。";
+const IDLE_PROMPT = "何かお話したいことはありますか？";
+const IDLE_TIME = 10000; // 10秒
+
 export default function Home() {
   const [model, setModel] = useState(MODELS[0].name);
   const [prompt, setPrompt] = useState('');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [conversationHistory, setConversationHistory] = useState<string[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
+  const [lastUserInteraction, setLastUserInteraction] = useState(Date.now());
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    // 初期プロンプトを送信
+    sendPrompt(SYSTEM_PROMPT + "\n" + IDLE_PROMPT);
+
+    // 5秒ごとに自動的にプロンプトを送信
+    const intervalId = setInterval(() => {
+      if (Date.now() - lastUserInteraction > IDLE_TIME) {
+        sendPrompt(IDLE_PROMPT);
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [model, lastUserInteraction]);
+
+  const sendPrompt = async (currentPrompt: string) => {
     setLoading(true);
-    setResult(''); // Clear previous result
-
+    setPrompt(''); // Clear the input field after sending
     try {
       const response = await fetch('/api/ollama', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model, prompt }),
+        body: JSON.stringify({ model, prompt: SYSTEM_PROMPT + "\n" + conversationHistory.join("\n") + "\n" + currentPrompt }),
       });
 
       if (!response.ok) {
@@ -75,25 +94,54 @@ export default function Home() {
           }
         });
       }
+      setConversationHistory(prev => [...prev, currentPrompt, accumulatedResult]);
     } catch (error: any) {
       console.error(error);
       setResult(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    sendPrompt(prompt);
+    setLastUserInteraction(Date.now());
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as any);
+      setLastUserInteraction(Date.now());
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPrompt(e.target.value);
+    setLastUserInteraction(Date.now());
+  };
+
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Ollama Tester</h1>
+    <div className={`container mx-auto p-4 ${darkMode ? 'dark' : ''}`}>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+        >
+          {darkMode ? 'ライトモード' : 'ダークモード'}
+        </button>
+      </div>
+      <h1 className="text-2xl font-bold mb-4 text-gray-700 dark:text-gray-200">Ollama Tester</h1>
       <form onSubmit={handleSubmit} className="mb-4">
         <div className="mb-2">
-          <label htmlFor="model" className="block text-gray-700 text-sm font-bold mb-2">
+          <label htmlFor="model" className="block text-gray-700 text-sm font-bold mb-2 dark:text-gray-200">
             Model:
           </label>
           <select
             id="model"
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:text-gray-200"
             value={model}
             onChange={(e) => setModel(e.target.value)}
           >
@@ -105,14 +153,16 @@ export default function Home() {
           </select>
         </div>
         <div className="mb-2">
-          <label htmlFor="prompt" className="block text-gray-700 text-sm font-bold mb-2">
+          <label htmlFor="prompt" className="block text-gray-700 text-sm font-bold mb-2 dark:text-gray-200">
             Prompt:
           </label>
           <textarea
+            ref={textareaRef}
             id="prompt"
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:text-gray-200"
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
           />
         </div>
         <button
@@ -124,8 +174,8 @@ export default function Home() {
         </button>
       </form>
       <div>
-        <h2 className="text-xl font-bold mb-2">Result:</h2>
-        <p className="text-gray-700">{result}</p>
+        <h2 className="text-xl font-bold mb-2 text-gray-700 dark:text-gray-200">Result:</h2>
+        <p className="text-gray-700 dark:text-gray-200">{result}</p>
       </div>
     </div>
   );
